@@ -1,26 +1,37 @@
-test.py
-test2.py
-test3.py
-test4.py
-
+# Archive directory
 archive/
 
+# Virtual environment
 .venv/
+venv/
 
-data/bronze/acra/html
-data/bronze/acra/json
-data/bronze/acra/stage
-data/bronze/acra/acra_data.csv
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
-data/bronze/companies_sg/*.csv
+# Exclude all data files but keep folder structure
+# CSV files
+*.csv
 
-data/bronze/recordowld/no_website_html/*.html
-data/bronze/recordowld/recordowl_website_1000.csv
+# JSON files (except package.json, config files)
+data/**/*.json
 
-__pycache__
+# HTML files
+*.html
 
-html_files
+# Excel files
+*.xlsx
+*.xls
 
-html_pages
+# Parquet files
+*.parquet
 
-html_companies_sg
+# Keep .gitkeep files to preserve empty directories
+!.gitkeep
+
+# HTML directories
+html_files/
+html_pages/
+html_companies_sg/
