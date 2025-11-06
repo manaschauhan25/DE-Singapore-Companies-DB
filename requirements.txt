@@ -1,0 +1,9 @@
+pandas
+requests
+beautifulsoup4
+selenium
+requests-html
+simple_google_finder
+webdriver-manager
+undetected_chromedriver
+setuptools
