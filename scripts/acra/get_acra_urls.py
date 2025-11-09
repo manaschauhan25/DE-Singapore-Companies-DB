@@ -1,7 +1,7 @@
 import re
 import json
 
-with open("data/bronze/html/rendered_acra_gov.html", "r", encoding="utf-8") as f:
+with open("data/bronze/acra/html/rendered_acra_gov.html", "r", encoding="utf-8") as f:
     html = f.read()
 
 # Match escaped-quote pattern like:

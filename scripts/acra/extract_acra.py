@@ -15,7 +15,7 @@ import os
 OUTPUT_DIR = Path("data/bronze/acra/stage")
 FINAL_OUTPUT = Path("data/bronze/acra/acra_data.csv")
 API_BASE = "https://api-open.data.gov.sg/v1/public/api/datasets"
-ACRA_URL_PATH = "data/bronze/json/acra_dataset_ids.json"
+ACRA_URL_PATH = "data/bronze/acra/json/acra_dataset_ids.json"
 DELETE_CSV_PATH='data/bronze//acra/stage/'
 DATASET_IDS=None
 # Path to your JSON file
