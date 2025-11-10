@@ -1,0 +1,12 @@
+{
+	"name": "sg_delta_lake_ls",
+	"properties": {
+		"annotations": [],
+		"type": "AzureDatabricksDeltaLake",
+		"typeProperties": {
+			"domain": "https://adb-460417587716220.0.azuredatabricks.net",
+			"clusterId": "123",
+			"workspaceResourceId": "/subscriptions/450dc44d-9800-4558-97cf-aa1d6053e664/resourceGroups/singapore-companies-rg/providers/Microsoft.Databricks/workspaces/sgcomaniesdb"
+		}
+	}
+}
