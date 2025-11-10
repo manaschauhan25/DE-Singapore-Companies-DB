@@ -1,0 +1,9 @@
+{
+	"name": "sgadfv1",
+	"location": "southeastasia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "f5449db5-095a-43af-a515-502806169a26",
+		"tenantId": "a5917772-530c-4c53-a1e0-6d1dfa748d49"
+	}
+}
