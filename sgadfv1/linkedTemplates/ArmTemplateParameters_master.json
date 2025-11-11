@@ -1,0 +1,33 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "sgadfv1"
+		},
+		"sg_db_ls_password": {
+			"value": ""
+		},
+		"sg_adls_ls_properties_typeProperties_url": {
+			"value": "https://singaporecomadls.dfs.core.windows.net/"
+		},
+		"sg_databricks_ls_properties_typeProperties_existingClusterId": {
+			"value": "1110-192349-8spb6kcr"
+		},
+		"sg_db_ls_properties_typeProperties_server": {
+			"value": "sgsqlserver1.database.windows.net"
+		},
+		"sg_db_ls_properties_typeProperties_database": {
+			"value": "sgsqldb1"
+		},
+		"sg_db_ls_properties_typeProperties_userName": {
+			"value": "adminmanas"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}

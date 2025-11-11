@@ -1,0 +1,809 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "sgadfv1"
+		},
+		"sg_db_ls_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'sg_db_ls'"
+		},
+		"sg_adls_ls_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://singaporecomadls.dfs.core.windows.net/"
+		},
+		"sg_databricks_ls_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "1110-192349-8spb6kcr"
+		},
+		"sg_db_ls_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "sgsqlserver1.database.windows.net"
+		},
+		"sg_db_ls_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "sgsqldb1"
+		},
+		"sg_db_ls_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "adminmanas"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/sg_adls_ls')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('sg_adls_ls_properties_typeProperties_url')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sg_databricks_ls')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-460417587716220.0.azuredatabricks.net",
+					"authentication": "MSI",
+					"workspaceResourceId": "/subscriptions/450dc44d-9800-4558-97cf-aa1d6053e664/resourceGroups/singapore-companies-rg/providers/Microsoft.Databricks/workspaces/sgcomaniesdb",
+					"existingClusterId": "[parameters('sg_databricks_ls_properties_typeProperties_existingClusterId')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sg_db_ls')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('sg_db_ls_properties_typeProperties_server')]",
+					"database": "[parameters('sg_db_ls_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('sg_db_ls_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('sg_db_ls_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sg_delta_lake_ls')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricksDeltaLake",
+				"typeProperties": {
+					"domain": "https://adb-460417587716220.0.azuredatabricks.net",
+					"clusterId": "1110-192349-8spb6kcr",
+					"workspaceResourceId": "/subscriptions/450dc44d-9800-4558-97cf-aa1d6053e664/resourceGroups/singapore-companies-rg/providers/Microsoft.Databricks/workspaces/sgcomaniesdb"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/cdc_json_df')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sg_adls_ls",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"container": {
+						"type": "string"
+					},
+					"directory": {
+						"type": "string"
+					},
+					"file": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().file",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().directory",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().container",
+							"type": "Expression"
+						}
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/sg_adls_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sg_company_df')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sg_adls_ls",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "stage",
+						"fileSystem": "staging"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/sg_adls_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sg_db_df')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sg_db_ls",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"schema": {
+						"type": "string"
+					},
+					"table": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().table",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/sg_db_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sg_delta_lake_df')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sg_delta_lake_ls",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureDatabricksDeltaLakeDataset",
+				"typeProperties": {},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/sg_delta_lake_ls')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Load SQL Database')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Latest CDC",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
+							},
+							"dataset": {
+								"referenceName": "cdc_json_df",
+								"type": "DatasetReference",
+								"parameters": {
+									"container": {
+										"value": "@pipeline().parameters.cdc_container",
+										"type": "Expression"
+									},
+									"directory": {
+										"value": "@pipeline().parameters.cdc_directory",
+										"type": "Expression"
+									},
+									"file": "cdc.json"
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "Get_Latest_Records",
+						"type": "DatabricksNotebook",
+						"dependsOn": [
+							{
+								"activity": "Get Latest CDC",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Repos/24huda.zaidi@fostiima.org/DE-Singapore-Companies-DB/Pyspark_Notebooks/ADF_Permission/counts",
+							"baseParameters": {
+								"catalog": {
+									"value": "@pipeline().parameters.src_catalog",
+									"type": "Expression"
+								},
+								"schema": {
+									"value": "@pipeline().parameters.src_schema",
+									"type": "Expression"
+								},
+								"table": {
+									"value": "@pipeline().parameters.src_table",
+									"type": "Expression"
+								},
+								"last_cdc": {
+									"value": "@activity('Get Latest CDC').output.value[0].cdc",
+									"type": "Expression"
+								},
+								"cdc_column": {
+									"value": "@pipeline().parameters.cdc_column",
+									"type": "Expression"
+								},
+								"staging_path": {
+									"value": "@pipeline().parameters.staging_path",
+									"type": "Expression"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "sg_databricks_ls",
+							"type": "LinkedServiceReference"
+						}
+					},
+					{
+						"name": "Check Counts",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Get_Latest_Records",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@greater(activity('Get_Latest_Records').output.runOutput.records, 0)",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "No new Records",
+									"type": "Fail",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"message": "No New Records",
+										"errorCode": "No Records Found"
+									}
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "Copy to SQL",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "ParquetSource",
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"wildcardFolderPath": "stage",
+												"wildcardFileName": "*.parquet",
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "ParquetReadSettings"
+											}
+										},
+										"sink": {
+											"type": "AzureSqlSink",
+											"writeBehavior": "insert"
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "sg_company_df",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "sg_db_df",
+											"type": "DatasetReference",
+											"parameters": {
+												"schema": {
+													"value": "@pipeline().parameters.dest_schema",
+													"type": "Expression"
+												},
+												"table": {
+													"value": "@pipeline().parameters.dest_table",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					},
+					{
+						"name": "Updating Latest CDC",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Check Counts",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"additionalColumns": [
+									{
+										"name": "cdc",
+										"value": {
+											"value": "@activity('Get_Latest_Records').output.runOutput.max_cdc",
+											"type": "Expression"
+										}
+									}
+								],
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "cdc_json_df",
+								"type": "DatasetReference",
+								"parameters": {
+									"container": {
+										"value": "@pipeline().parameters.cdc_container",
+										"type": "Expression"
+									},
+									"directory": {
+										"value": "@pipeline().parameters.cdc_directory",
+										"type": "Expression"
+									},
+									"file": "empty.json"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "cdc_json_df",
+								"type": "DatasetReference",
+								"parameters": {
+									"container": {
+										"value": "@pipeline().parameters.cdc_container",
+										"type": "Expression"
+									},
+									"directory": {
+										"value": "@pipeline().parameters.cdc_directory",
+										"type": "Expression"
+									},
+									"file": "cdc.json"
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"src_catalog": {
+						"type": "string",
+						"defaultValue": "silver"
+					},
+					"src_schema": {
+						"type": "string",
+						"defaultValue": "clean"
+					},
+					"src_table": {
+						"type": "string",
+						"defaultValue": "stocks"
+					},
+					"cdc_column": {
+						"type": "string",
+						"defaultValue": "updated_at"
+					},
+					"staging_path": {
+						"type": "string",
+						"defaultValue": "abfss://staging@singaporecomadls.dfs.core.windows.net/stage"
+					},
+					"dest_schema": {
+						"type": "string",
+						"defaultValue": "silver"
+					},
+					"dest_table": {
+						"type": "string",
+						"defaultValue": "stocks_clean"
+					},
+					"cdc_container": {
+						"type": "string",
+						"defaultValue": "silver"
+					},
+					"cdc_directory": {
+						"type": "string",
+						"defaultValue": "clean/stocks_cdc"
+					}
+				},
+				"variables": {
+					"temp": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/cdc_json_df')]",
+				"[concat(variables('factoryId'), '/linkedServices/sg_databricks_ls')]",
+				"[concat(variables('factoryId'), '/datasets/sg_company_df')]",
+				"[concat(variables('factoryId'), '/datasets/sg_db_df')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Prcess Gold Tables')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Looping Silver Table Metadata",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Gold Metadata",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Gold Metadata').output.value",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"activities": [
+								{
+									"name": "Load SQL Data",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "Load SQL Database",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"src_catalog": {
+												"value": "@item().src_catalog",
+												"type": "Expression"
+											},
+											"src_schema": {
+												"value": "@item().src_schema",
+												"type": "Expression"
+											},
+											"src_table": {
+												"value": "@item().src_table",
+												"type": "Expression"
+											},
+											"cdc_column": {
+												"value": "@item().cdc_column",
+												"type": "Expression"
+											},
+											"staging_path": {
+												"value": "@item().staging_path",
+												"type": "Expression"
+											},
+											"dest_schema": {
+												"value": "@item().dest_schema",
+												"type": "Expression"
+											},
+											"dest_table": {
+												"value": "@item().dest_table",
+												"type": "Expression"
+											},
+											"cdc_container": {
+												"value": "@item().cdc_container",
+												"type": "Expression"
+											},
+											"cdc_directory": {
+												"value": "@item().cdc_directory",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Get Gold Metadata",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "cdc_json_df",
+								"type": "DatasetReference",
+								"parameters": {
+									"container": "metadata",
+									"directory": "gold",
+									"file": "gold_metadata.json"
+								}
+							},
+							"firstRowOnly": false
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/cdc_json_df')]",
+				"[concat(variables('factoryId'), '/pipelines/Load SQL Database')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Process Silver Tables')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Looping Silver Table Metadata",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Silver Metadata",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Silver Metadata').output.value",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"activities": [
+								{
+									"name": "Load SQL Data",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "Load SQL Database",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"src_catalog": {
+												"value": "@item().src_catalog",
+												"type": "Expression"
+											},
+											"src_schema": {
+												"value": "@item().src_schema",
+												"type": "Expression"
+											},
+											"src_table": {
+												"value": "@item().src_table",
+												"type": "Expression"
+											},
+											"cdc_column": {
+												"value": "@item().cdc_column",
+												"type": "Expression"
+											},
+											"staging_path": {
+												"value": "@item().staging_path",
+												"type": "Expression"
+											},
+											"dest_schema": {
+												"value": "@item().dest_schema",
+												"type": "Expression"
+											},
+											"dest_table": {
+												"value": "@item().dest_table",
+												"type": "Expression"
+											},
+											"cdc_container": {
+												"value": "@item().cdc_container",
+												"type": "Expression"
+											},
+											"cdc_directory": {
+												"value": "@item().cdc_directory",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Get Silver Metadata",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "cdc_json_df",
+								"type": "DatasetReference",
+								"parameters": {
+									"container": "metadata",
+									"directory": "silver",
+									"file": "silver_metadata.json"
+								}
+							},
+							"firstRowOnly": false
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/cdc_json_df')]",
+				"[concat(variables('factoryId'), '/pipelines/Load SQL Database')]"
+			]
+		}
+	]
+}
