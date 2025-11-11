@@ -57,7 +57,7 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"notebookPath": "/Repos/24huda.zaidi@fostiima.org/DE-Singapore-Companies-DB/Pyspark_Notebooks/ADF_Permission/counts",
+					"notebookPath": "/Repos/24huda.zaidi@fostiima.org/DE-Singapore-Companies-DB/Pyspark_Notebooks/ADF_and_Databricks/Get Count and Write in Staging",
 					"baseParameters": {
 						"catalog": {
 							"value": "@pipeline().parameters.src_catalog",

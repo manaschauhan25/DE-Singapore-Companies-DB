@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Looping Silver Table Metadata",
+				"name": "Looping Gold Table Metadata",
 				"type": "ForEach",
 				"dependsOn": [
 					{
