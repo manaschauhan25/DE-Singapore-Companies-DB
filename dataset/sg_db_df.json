@@ -1,0 +1,12 @@
+{
+	"name": "sg_db_df",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "sg_db_ls",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": []
+	}
+}

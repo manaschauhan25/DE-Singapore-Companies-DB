@@ -1,0 +1,20 @@
+{
+	"name": "cdc_json_df",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "sg_adls_ls",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "cdc.json",
+				"folderPath": "clean/acra_cdc",
+				"fileSystem": "silver"
+			}
+		},
+		"schema": {}
+	}
+}
