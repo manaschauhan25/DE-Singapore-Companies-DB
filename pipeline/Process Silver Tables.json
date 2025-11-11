@@ -1,0 +1,120 @@
+{
+	"name": "Process Silver Tables",
+	"properties": {
+		"activities": [
+			{
+				"name": "Looping Silver Table Metadata",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Silver Metadata",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Silver Metadata').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Load SQL Data",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "Load SQL Database",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"src_catalog": {
+										"value": "@item().src_catalog",
+										"type": "Expression"
+									},
+									"src_schema": {
+										"value": "@item().src_schema",
+										"type": "Expression"
+									},
+									"src_table": {
+										"value": "@item().src_table",
+										"type": "Expression"
+									},
+									"cdc_column": {
+										"value": "@item().cdc_column",
+										"type": "Expression"
+									},
+									"staging_path": {
+										"value": "@item().staging_path",
+										"type": "Expression"
+									},
+									"dest_schema": {
+										"value": "@item().dest_schema",
+										"type": "Expression"
+									},
+									"dest_table": {
+										"value": "@item().dest_table",
+										"type": "Expression"
+									},
+									"cdc_container": {
+										"value": "@item().cdc_container",
+										"type": "Expression"
+									},
+									"cdc_directory": {
+										"value": "@item().cdc_directory",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Get Silver Metadata",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "cdc_json_df",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": "metadata",
+							"directory": "silver",
+							"file": "silver_metadata.json"
+						}
+					},
+					"firstRowOnly": false
+				}
+			}
+		],
+		"annotations": []
+	}
+}

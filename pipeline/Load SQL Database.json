@@ -1,5 +1,5 @@
 {
-	"name": "pipeline1",
+	"name": "Load SQL Database",
 	"properties": {
 		"activities": [
 			{
@@ -9,9 +9,7 @@
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
+					"retryIntervalInSeconds": 30
 				},
 				"userProperties": [],
 				"typeProperties": {
@@ -21,15 +19,24 @@
 							"type": "AzureBlobFSReadSettings",
 							"recursive": true,
 							"enablePartitionDiscovery": false
-						},
-						"formatSettings": {
-							"type": "JsonReadSettings"
 						}
 					},
 					"dataset": {
 						"referenceName": "cdc_json_df",
-						"type": "DatasetReference"
-					}
+						"type": "DatasetReference",
+						"parameters": {
+							"container": {
+								"value": "@pipeline().parameters.cdc_container",
+								"type": "Expression"
+							},
+							"directory": {
+								"value": "@pipeline().parameters.cdc_directory",
+								"type": "Expression"
+							},
+							"file": "cdc.json"
+						}
+					},
+					"firstRowOnly": false
 				}
 			},
 			{
@@ -46,9 +53,7 @@
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
+					"retryIntervalInSeconds": 30
 				},
 				"userProperties": [],
 				"typeProperties": {
@@ -67,7 +72,7 @@
 							"type": "Expression"
 						},
 						"last_cdc": {
-							"value": "@activity('Get Latest CDC').output.firstRow.cdc",
+							"value": "@activity('Get Latest CDC').output.value[0].cdc",
 							"type": "Expression"
 						},
 						"cdc_column": {
@@ -86,7 +91,7 @@
 				}
 			},
 			{
-				"name": "If Condition1",
+				"name": "Check Counts",
 				"type": "IfCondition",
 				"dependsOn": [
 					{
@@ -102,13 +107,24 @@
 						"value": "@greater(activity('Get_Latest_Records').output.runOutput.records, 0)",
 						"type": "Expression"
 					},
+					"ifFalseActivities": [
+						{
+							"name": "No new Records",
+							"type": "Fail",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"message": "No New Records",
+								"errorCode": "No Records Found"
+							}
+						}
+					],
 					"ifTrueActivities": [
 						{
-							"name": "Copy data1_copy1",
+							"name": "Copy to SQL",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
-								"timeout": "0.12:00:00",
 								"retry": 0,
 								"retryIntervalInSeconds": 30,
 								"secureOutput": false,
@@ -131,19 +147,9 @@
 								},
 								"sink": {
 									"type": "AzureSqlSink",
-									"writeBehavior": "insert",
-									"sqlWriterUseTableLock": false,
-									"disableMetricsCollection": false
+									"writeBehavior": "insert"
 								},
-								"enableStaging": false,
-								"translator": {
-									"type": "TabularTranslator",
-									"typeConversion": true,
-									"typeConversionSettings": {
-										"allowDataTruncation": true,
-										"treatBooleanAsNumber": false
-									}
-								}
+								"enableStaging": false
 							},
 							"inputs": [
 								{
@@ -157,11 +163,11 @@
 									"type": "DatasetReference",
 									"parameters": {
 										"schema": {
-											"value": "@pipeline().parameters.staging_schema",
+											"value": "@pipeline().parameters.dest_schema",
 											"type": "Expression"
 										},
 										"table": {
-											"value": "@pipeline().parameters.staging_table",
+											"value": "@pipeline().parameters.dest_table",
 											"type": "Expression"
 										}
 									}
@@ -172,11 +178,11 @@
 				}
 			},
 			{
-				"name": "Copy data1",
+				"name": "Updating Latest CDC",
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "If Condition1",
+						"activity": "Check Counts",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -185,14 +191,21 @@
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
+					"retryIntervalInSeconds": 30
 				},
 				"userProperties": [],
 				"typeProperties": {
 					"source": {
 						"type": "JsonSource",
+						"additionalColumns": [
+							{
+								"name": "cdc",
+								"value": {
+									"value": "@activity('Get_Latest_Records').output.runOutput.max_cdc",
+									"type": "Expression"
+								}
+							}
+						],
 						"storeSettings": {
 							"type": "AzureBlobFSReadSettings",
 							"recursive": true,
@@ -203,118 +216,48 @@
 						}
 					},
 					"sink": {
-						"type": "AzureSqlSink",
-						"writeBehavior": "insert",
-						"sqlWriterUseTableLock": false,
-						"disableMetricsCollection": false
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
 					},
-					"enableStaging": false,
-					"translator": {
-						"type": "TabularTranslator",
-						"mappings": [
-							{
-								"source": {
-									"name": "stock_symbol",
-									"type": "String"
-								},
-								"sink": {
-									"name": "stock_symbol",
-									"type": "String"
-								}
-							},
-							{
-								"source": {
-									"name": "stock_company_name",
-									"type": "String"
-								},
-								"sink": {
-									"name": "stock_company_name",
-									"type": "String"
-								}
-							},
-							{
-								"source": {
-									"name": "market_cap",
-									"type": "Double"
-								},
-								"sink": {
-									"name": "market_cap",
-									"type": "Double"
-								}
-							},
-							{
-								"source": {
-									"name": "revenue",
-									"type": "Double"
-								},
-								"sink": {
-									"name": "revenue",
-									"type": "Double"
-								}
-							},
-							{
-								"source": {
-									"name": "stock_price",
-									"type": "Double"
-								},
-								"sink": {
-									"name": "stock_price",
-									"type": "Double"
-								}
-							},
-							{
-								"source": {
-									"name": "percent_change",
-									"type": "Double"
-								},
-								"sink": {
-									"name": "percent_change",
-									"type": "Double"
-								}
-							},
-							{
-								"source": {
-									"name": "source_data",
-									"type": "String"
-								},
-								"sink": {
-									"name": "source_data",
-									"type": "String"
-								}
-							},
-							{
-								"source": {
-									"name": "created_at",
-									"type": "DateTime"
-								},
-								"sink": {
-									"name": "created_at",
-									"type": "DateTime"
-								}
-							},
-							{
-								"source": {
-									"name": "updated_at",
-									"type": "DateTime"
-								},
-								"sink": {
-									"name": "updated_at",
-									"type": "DateTime"
-								}
-							}
-						]
-					}
+					"enableStaging": false
 				},
 				"inputs": [
 					{
 						"referenceName": "cdc_json_df",
-						"type": "DatasetReference"
+						"type": "DatasetReference",
+						"parameters": {
+							"container": {
+								"value": "@pipeline().parameters.cdc_container",
+								"type": "Expression"
+							},
+							"directory": {
+								"value": "@pipeline().parameters.cdc_directory",
+								"type": "Expression"
+							},
+							"file": "empty.json"
+						}
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "sg_db_df",
-						"type": "DatasetReference"
+						"referenceName": "cdc_json_df",
+						"type": "DatasetReference",
+						"parameters": {
+							"container": {
+								"value": "@pipeline().parameters.cdc_container",
+								"type": "Expression"
+							},
+							"directory": {
+								"value": "@pipeline().parameters.cdc_directory",
+								"type": "Expression"
+							},
+							"file": "cdc.json"
+						}
 					}
 				]
 			}
@@ -342,17 +285,19 @@
 			},
 			"dest_schema": {
 				"type": "string",
-				"defaultValue": "staging"
+				"defaultValue": "silver"
 			},
 			"dest_table": {
 				"type": "string",
 				"defaultValue": "stocks_clean"
 			},
 			"cdc_container": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "silver"
 			},
 			"cdc_directory": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "clean/stocks_cdc"
 			}
 		},
 		"variables": {

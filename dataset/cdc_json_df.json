@@ -6,10 +6,13 @@
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
-			"cdc_container": {
+			"container": {
 				"type": "string"
 			},
-			"cdc_directory": {
+			"directory": {
+				"type": "string"
+			},
+			"file": {
 				"type": "string"
 			}
 		},
@@ -18,13 +21,16 @@
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
-				"fileName": "cdc.json",
+				"fileName": {
+					"value": "@dataset().file",
+					"type": "Expression"
+				},
 				"folderPath": {
-					"value": "@dataset().cdc_directory",
+					"value": "@dataset().directory",
 					"type": "Expression"
 				},
 				"fileSystem": {
-					"value": "@dataset().cdc_container",
+					"value": "@dataset().container",
 					"type": "Expression"
 				}
 			}
