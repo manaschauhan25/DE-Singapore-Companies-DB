@@ -6,6 +6,5 @@
 		"typeProperties": {
 			"url": "https://singaporecomadls.dfs.core.windows.net/"
 		}
-	},
-	"type": "Microsoft.DataFactory/factories/linkedservices"
+	}
 }
