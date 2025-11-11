@@ -1,0 +1,119 @@
+#######################ACRA###############################
+CREATE TABLE silver.acra_clean (
+    uen NVARCHAR(50) PRIMARY KEY,
+    company_name NVARCHAR(255),
+    entity_type_description NVARCHAR(255),
+    entity_status_description NVARCHAR(255),
+    registration_incorporation_date NVARCHAR(50),
+    industry_code NVARCHAR(50),
+    industry_description NVARCHAR(255),
+    secondary_ssic_code NVARCHAR(50),
+    secondary_ssic_description NVARCHAR(255),
+    no_of_officers NVARCHAR(50),
+    address NVARCHAR(MAX),
+    founding_year INT,
+    source_data NVARCHAR(100),
+    created_at DATETIME2,
+    updated_at DATETIME2
+);
+
+#########################RECORDOWL##########################
+
+CREATE TABLE silver.recordowl_clean (
+    uen_match NVARCHAR(50) PRIMARY KEY,
+    owl_company_name NVARCHAR(255),
+    recordowl_website NVARCHAR(1000),
+    company_website NVARCHAR(1000),
+    linkedin_url NVARCHAR(1000),
+    facebook_url NVARCHAR(1000),
+    instagram_url NVARCHAR(1000),
+    phone_number NVARCHAR(100),
+    company_description NVARCHAR(MAX),
+    owl_ssic_code NVARCHAR(500),
+    owl_industry NVARCHAR(255),
+    owl_secondary_ssic NVARCHAR(500),
+    owl_secondary_industry NVARCHAR(255),
+    source_data NVARCHAR(100),
+    created_at DATETIME2,
+    updated_at DATETIME2
+);
+
+#############################ScrapedWesbites####################
+
+CREATE TABLE silver.scraped_websites_clean (
+    uen_match NVARCHAR(50) PRIMARY KEY,
+    recordowl_website NVARCHAR(1000),
+    scraped_company_name NVARCHAR(255),
+    scraped_linkedin NVARCHAR(255),
+    scraped_facebook NVARCHAR(1000),
+    scraped_instagram NVARCHAR(1000),
+    scraped_email NVARCHAR(255),
+    scraped_phone NVARCHAR(100),
+    scraped_keywords NVARCHAR(MAX),
+    source_data NVARCHAR(100),
+    created_at DATETIME2,
+    updated_at DATETIME2
+);
+
+###############################CompaniesSG##########################
+
+CREATE TABLE silver.companies_sg_clean (
+    uen_match NVARCHAR(50) PRIMARY KEY,
+    sg_company_name NVARCHAR(255),
+    companies_sg_website NVARCHAR(255),
+    sg_reg_date NVARCHAR(50),
+    sg_company_type NVARCHAR(255),
+    sg_entity_status NVARCHAR(255),
+    sg_website NVARCHAR(255),
+    source_data NVARCHAR(100),
+    created_at DATETIME2,
+    updated_at DATETIME2
+);
+
+
+##################################Stocks#################################
+
+CREATE TABLE silver.stocks_clean (
+    stock_symbol NVARCHAR(50),
+    stock_company_name NVARCHAR(255),
+    market_cap FLOAT,
+    revenue FLOAT,
+    stock_price FLOAT,
+    percent_change FLOAT,
+    source_data NVARCHAR(100),
+    created_at DATETIME2,
+    updated_at DATETIME2
+);
+
+################################UnifiedCompanies##########################
+
+CREATE TABLE silver.unified_companies (
+    uen NVARCHAR(50) PRIMARY KEY,
+    company_name NVARCHAR(255),
+    website NVARCHAR(1000),
+    industry NVARCHAR(255),
+    industry_code NVARCHAR(50),
+    secondary_industry NVARCHAR(255),
+    entity_status NVARCHAR(255),
+    company_type NVARCHAR(255),
+    address NVARCHAR(MAX),
+    founding_year INT,
+    no_of_officers NVARCHAR(50),
+    linkedin NVARCHAR(1000),
+    facebook NVARCHAR(1000),
+    instagram NVARCHAR(1000),
+    contact_email NVARCHAR(255),
+    contact_phone NVARCHAR(100),
+    company_description NVARCHAR(MAX),
+    keywords NVARCHAR(MAX),
+    stock_symbol NVARCHAR(50),
+    market_cap FLOAT,
+    revenue FLOAT,
+    stock_price FLOAT,
+    percent_change FLOAT,
+    is_it_delisted BIT,
+    hq_country NVARCHAR(100),
+    no_of_locations_in_singapore INT,
+    created_at DATETIME2,
+    updated_at DATETIME2
+);

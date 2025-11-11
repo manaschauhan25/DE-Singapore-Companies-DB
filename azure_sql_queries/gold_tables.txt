@@ -1,0 +1,51 @@
+######################llm_enriched_companies###########################
+CREATE TABLE [gold].[llm_enriched_companies]
+(
+    [uen] NVARCHAR(100) NOT NULL PRIMARY KEY,      -- unique entity number
+    [keywords] NVARCHAR(MAX) NULL,                 -- text keywords list
+    [llm_normalized_industry] NVARCHAR(500) NULL,  -- normalized industry tag from LLM
+    [company_size] NVARCHAR(100) NULL,             -- e.g. small, medium, large
+    [products_offered] NVARCHAR(MAX) NULL,         -- textual list of products
+    [services_offered] NVARCHAR(MAX) NULL,         -- textual list of services
+    [error] NVARCHAR(MAX) NULL,                    -- store any processing errors
+    [source_of_data] NVARCHAR(255) NULL,           -- pipeline / dataset origin
+    [created_at] DATETIME2(3) NOT NULL DEFAULT SYSUTCDATETIME(),
+    [updated_at] DATETIME2(3) NULL
+);
+GO
+
+-- Optional: index for lookup and analytics
+CREATE INDEX IX_llm_enriched_companies_updated_at 
+ON [gold].[llm_enriched_companies] ([updated_at]);
+GO
+
+####################################master_companies#####################################
+CREATE TABLE [gold].[master_companies]
+(
+    [uen] NVARCHAR(100) NOT NULL PRIMARY KEY,
+    [company_name] NVARCHAR(500) NULL,
+    [website] NVARCHAR(1000) NULL,
+    [hq_country] NVARCHAR(200) NULL,
+    [no_of_locations_in_singapore] INT NULL,
+    [linkedin] NVARCHAR(1000) NULL,
+    [facebook] NVARCHAR(1000) NULL,
+    [instagram] NVARCHAR(1000) NULL,
+    [industry] NVARCHAR(500) NULL,
+    [number_of_employees] INT NULL,
+    [company_size] NVARCHAR(100) NULL,
+    [is_it_delisted] BIT NULL,
+    [stock_exchange_code] NVARCHAR(50) NULL,
+    [revenue] FLOAT NULL,
+    [founding_year] INT NULL,
+    [products_offered] NVARCHAR(MAX) NULL,
+    [services_offered] NVARCHAR(MAX) NULL,
+    [keywords] NVARCHAR(MAX) NULL,
+    [created_at] DATETIME2(3) NOT NULL DEFAULT SYSUTCDATETIME(),
+    [updated_at] DATETIME2(3) NULL
+);
+GO
+
+-- Helpful non-clustered index for time-based analysis
+CREATE INDEX IX_master_companies_updated_at
+ON [gold].[master_companies] ([updated_at]);
+GO

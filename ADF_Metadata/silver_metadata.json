@@ -1,0 +1,75 @@
+[
+  {
+    "entity": "stocks",
+    "src_catalog": "silver",
+    "src_schema": "clean",
+    "src_table": "stocks",
+    "dest_schema": "silver",
+    "dest_table": "stocks_clean",
+    "cdc_container": "silver",
+    "cdc_directory": "clean/stocks_cdc",
+    "cdc_column": "updated_at",
+    "staging_path": "abfss://staging@singaporecomadls.dfs.core.windows.net/stage"
+  },
+  {
+    "entity": "acra",
+    "src_catalog": "silver",
+    "src_schema": "clean",
+    "src_table": "acra",
+    "dest_schema": "silver",
+    "dest_table": "acra_clean",
+    "cdc_container": "silver",
+    "cdc_directory": "clean/acra_cdc",
+    "cdc_column": "updated_at",
+    "staging_path": "abfss://staging@singaporecomadls.dfs.core.windows.net/stage"
+  },
+  {
+    "entity": "companies_sg",
+    "src_catalog": "silver",
+    "src_schema": "clean",
+    "src_table": "companies_sg",
+    "dest_schema": "silver",
+    "dest_table": "companies_sg_clean",
+    "cdc_container": "silver",
+    "cdc_directory": "clean/companies_sg_cdc",
+    "cdc_column": "updated_at",
+    "staging_path": "abfss://staging@singaporecomadls.dfs.core.windows.net/stage"
+  },
+  {
+    "entity": "recordowl",
+    "src_catalog": "silver",
+    "src_schema": "clean",
+    "src_table": "recordowl",
+    "dest_schema": "silver",
+    "dest_table": "recordowl_clean",
+    "cdc_container": "silver",
+    "cdc_directory": "clean/recordowl_cdc",
+    "cdc_column": "updated_at",
+    "staging_path": "abfss://staging@singaporecomadls.dfs.core.windows.net/stage"
+  },
+  {
+    "entity": "scrapped_wesbites",
+    "src_catalog": "silver",
+    "src_schema": "clean",
+    "src_table": "scrapped_wesbites",
+    "dest_schema": "silver",
+    "dest_table": "scrapped_wesbites_clean",
+    "cdc_container": "silver",
+    "cdc_directory": "clean/scrapped_wesbites_cdc",
+    "cdc_column": "updated_at",
+    "staging_path": "abfss://staging@singaporecomadls.dfs.core.windows.net/stage"
+  },
+  {
+    "entity": "unified_companies",
+    "src_catalog": "silver",
+    "src_schema": "unified",
+    "src_table": "unified_companies",
+    "dest_schema": "silver",
+    "dest_table": "unified_companies",
+    "cdc_container": "silver",
+    "cdc_directory": "unified_companies_cdc",
+    "cdc_column": "updated_at",
+    "staging_path": "abfss://staging@singaporecomadls.dfs.core.windows.net/stage"
+  }
+ 
+]

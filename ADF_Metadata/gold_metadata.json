@@ -1,0 +1,28 @@
+[
+    {
+      "entity": "llm_enriched_companies",
+      "src_catalog": "gold",
+      "src_schema": "final",
+      "src_table": "llm_enriched_companies",
+      "dest_schema": "gold",
+      "dest_table": "llm_enriched_companies",
+      "cdc_container": "gold",
+      "cdc_directory": "final/llm_enriched_companies_cdc",
+      "cdc_column": "updated_at",
+      "staging_path": "abfss://staging@singaporecomadls.dfs.core.windows.net/stage"
+    },
+    {
+      "entity": "master_companies",
+      "src_catalog": "gold",
+      "src_schema": "final",
+      "src_table": "master_companies",
+      "dest_schema": "gold",
+      "dest_table": "master_companies",
+      "cdc_container": "gold",
+      "cdc_directory": "final_gold_master_cdc",
+      "cdc_column": "updated_at",
+      "staging_path": "abfss://staging@singaporecomadls.dfs.core.windows.net/stage"
+    }
+   
+  ]
+  
