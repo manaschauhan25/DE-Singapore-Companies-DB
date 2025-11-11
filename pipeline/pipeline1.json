@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Lookup1",
+				"name": "Get Latest CDC",
 				"type": "Lookup",
 				"dependsOn": [],
 				"policy": {
@@ -33,11 +33,150 @@
 				}
 			},
 			{
-				"name": "Lookup2",
-				"type": "Lookup",
+				"name": "Get_Latest_Records",
+				"type": "DatabricksNotebook",
 				"dependsOn": [
 					{
-						"activity": "Lookup1",
+						"activity": "Get Latest CDC",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Repos/24huda.zaidi@fostiima.org/DE-Singapore-Companies-DB/Pyspark_Notebooks/ADF_Permission/counts",
+					"baseParameters": {
+						"catalog": {
+							"value": "@pipeline().parameters.src_catalog",
+							"type": "Expression"
+						},
+						"schema": {
+							"value": "@pipeline().parameters.src_schema",
+							"type": "Expression"
+						},
+						"table": {
+							"value": "@pipeline().parameters.src_table",
+							"type": "Expression"
+						},
+						"last_cdc": {
+							"value": "@activity('Get Latest CDC').output.firstRow.cdc",
+							"type": "Expression"
+						},
+						"cdc_column": {
+							"value": "@pipeline().parameters.cdc_column",
+							"type": "Expression"
+						},
+						"staging_path": {
+							"value": "@pipeline().parameters.staging_path",
+							"type": "Expression"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "sg_databricks_ls",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "If Condition1",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Get_Latest_Records",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('Get_Latest_Records').output.runOutput.records, 0)",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Copy data1_copy1",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "ParquetSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"wildcardFolderPath": "stage",
+										"wildcardFileName": "*.parquet",
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "ParquetReadSettings"
+									}
+								},
+								"sink": {
+									"type": "AzureSqlSink",
+									"writeBehavior": "insert",
+									"sqlWriterUseTableLock": false,
+									"disableMetricsCollection": false
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "sg_company_df",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "sg_db_df",
+									"type": "DatasetReference",
+									"parameters": {
+										"schema": {
+											"value": "@pipeline().parameters.staging_schema",
+											"type": "Expression"
+										},
+										"table": {
+											"value": "@pipeline().parameters.staging_table",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "Copy data1",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "If Condition1",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -53,20 +192,174 @@
 				"userProperties": [],
 				"typeProperties": {
 					"source": {
-						"type": "AzureDatabricksDeltaLakeSource",
-						"query": {
-							"value": "@concat('SELECT count(*) from silver.clean.stocks where updated_at > ',activity('Lookup1').output.firstRow.cdc)",
-							"type": "Expression"
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
 						}
 					},
-					"dataset": {
-						"referenceName": "sg_delta_lake_df",
-						"type": "DatasetReference"
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false,
+						"disableMetricsCollection": false
 					},
-					"firstRowOnly": false
-				}
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"name": "stock_symbol",
+									"type": "String"
+								},
+								"sink": {
+									"name": "stock_symbol",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "stock_company_name",
+									"type": "String"
+								},
+								"sink": {
+									"name": "stock_company_name",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "market_cap",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "market_cap",
+									"type": "Double"
+								}
+							},
+							{
+								"source": {
+									"name": "revenue",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "revenue",
+									"type": "Double"
+								}
+							},
+							{
+								"source": {
+									"name": "stock_price",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "stock_price",
+									"type": "Double"
+								}
+							},
+							{
+								"source": {
+									"name": "percent_change",
+									"type": "Double"
+								},
+								"sink": {
+									"name": "percent_change",
+									"type": "Double"
+								}
+							},
+							{
+								"source": {
+									"name": "source_data",
+									"type": "String"
+								},
+								"sink": {
+									"name": "source_data",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"name": "created_at",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "created_at",
+									"type": "DateTime"
+								}
+							},
+							{
+								"source": {
+									"name": "updated_at",
+									"type": "DateTime"
+								},
+								"sink": {
+									"name": "updated_at",
+									"type": "DateTime"
+								}
+							}
+						]
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "cdc_json_df",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "sg_db_df",
+						"type": "DatasetReference"
+					}
+				]
 			}
 		],
+		"parameters": {
+			"src_catalog": {
+				"type": "string",
+				"defaultValue": "silver"
+			},
+			"src_schema": {
+				"type": "string",
+				"defaultValue": "clean"
+			},
+			"src_table": {
+				"type": "string",
+				"defaultValue": "stocks"
+			},
+			"cdc_column": {
+				"type": "string",
+				"defaultValue": "updated_at"
+			},
+			"staging_path": {
+				"type": "string",
+				"defaultValue": "abfss://staging@singaporecomadls.dfs.core.windows.net/stage"
+			},
+			"dest_schema": {
+				"type": "string",
+				"defaultValue": "staging"
+			},
+			"dest_table": {
+				"type": "string",
+				"defaultValue": "stocks_clean"
+			},
+			"cdc_container": {
+				"type": "string"
+			},
+			"cdc_directory": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"temp": {
+				"type": "String"
+			}
+		},
 		"annotations": []
 	}
 }

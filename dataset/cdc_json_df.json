@@ -5,14 +5,28 @@
 			"referenceName": "sg_adls_ls",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"cdc_container": {
+				"type": "string"
+			},
+			"cdc_directory": {
+				"type": "string"
+			}
+		},
 		"annotations": [],
 		"type": "Json",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobFSLocation",
 				"fileName": "cdc.json",
-				"folderPath": "clean/acra_cdc",
-				"fileSystem": "silver"
+				"folderPath": {
+					"value": "@dataset().cdc_directory",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().cdc_container",
+					"type": "Expression"
+				}
 			}
 		},
 		"schema": {}
