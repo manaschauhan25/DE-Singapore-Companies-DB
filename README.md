@@ -85,7 +85,7 @@ A comprehensive **end-to-end data engineering solution** that builds a unified S
 
 ### Medallion Architecture Layers
 
-![Project Screenshot](docs\images\Architecture.jpeg)
+![Project Screenshot](docs/images/Architecture.jpeg)
 
 
 ### Technology Stack
