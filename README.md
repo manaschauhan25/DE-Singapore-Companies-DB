@@ -61,8 +61,6 @@
     <li><a href="#%EF%B8%8F-key-features">🛠️ Key Features</a></li>
     <li><a href="#-future-enhancements">🔮 Future Enhancements</a></li>
     <li><a href="#-references">📚 References</a></li>
-    <li><a href="#-license">📝 License</a></li>
-    <li><a href="#-contributors">👥 Contributors</a></li>
   </ol>
 </details>
 
